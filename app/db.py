@@ -26,18 +26,10 @@ from app.config import config
 from app.retriver.chunks_hybrid_search import ChucksHybridSearchRetriever
 from app.retriver.documents_hybrid_search import DocumentHybridSearchRetriever
 
-if config.AUTH_TYPE == "GOOGLE":
-    from fastapi_users.db import (
-        SQLAlchemyBaseOAuthAccountTableUUID,
+from fastapi_users.db import (
         SQLAlchemyBaseUserTableUUID,
         SQLAlchemyUserDatabase,
     )
-else:
-    from fastapi_users.db import (
-        SQLAlchemyBaseUserTableUUID,
-        SQLAlchemyUserDatabase,
-    )
-
 DATABASE_URL = config.DATABASE_URL
 
 
@@ -196,28 +188,8 @@ class LLMConfig(BaseModel, TimestampMixin):
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id", ondelete='CASCADE'), nullable=False)
     user = relationship("User", back_populates="llm_configs", foreign_keys=[user_id])
 
-if config.AUTH_TYPE == "GOOGLE":
-    class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
-        pass
 
-
-    class User(SQLAlchemyBaseUserTableUUID, Base):
-        oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
-            "OAuthAccount", lazy="joined"
-        )
-        search_spaces = relationship("SearchSpace", back_populates="user")
-        search_source_connectors = relationship("SearchSourceConnector", back_populates="user")
-        llm_configs = relationship("LLMConfig", back_populates="user", foreign_keys="LLMConfig.user_id", cascade="all, delete-orphan")
-
-        long_context_llm_id = Column(Integer, ForeignKey("llm_configs.id", ondelete="SET NULL"), nullable=True)
-        fast_llm_id = Column(Integer, ForeignKey("llm_configs.id", ondelete="SET NULL"), nullable=True)
-        strategic_llm_id = Column(Integer, ForeignKey("llm_configs.id", ondelete="SET NULL"), nullable=True)
-
-        long_context_llm = relationship("LLMConfig", foreign_keys=[long_context_llm_id], post_update=True)
-        fast_llm = relationship("LLMConfig", foreign_keys=[fast_llm_id], post_update=True)
-        strategic_llm = relationship("LLMConfig", foreign_keys=[strategic_llm_id], post_update=True)
-else:
-    class User(SQLAlchemyBaseUserTableUUID, Base):
+class User(SQLAlchemyBaseUserTableUUID, Base):
 
         search_spaces = relationship("SearchSpace", back_populates="user")
         search_source_connectors = relationship("SearchSourceConnector", back_populates="user")
@@ -229,8 +201,7 @@ else:
 
         long_context_llm = relationship("LLMConfig", foreign_keys=[long_context_llm_id], post_update=True)
         fast_llm = relationship("LLMConfig", foreign_keys=[fast_llm_id], post_update=True)
-        strategic_llm = relationship("LLMConfig", foreign_keys=[strategic_llm_id], post_update=True)
-
+        strategic_llm = relationship("LLMConfig", foreign_keys=[strategic_llm_id], post_update=True)    
 
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
@@ -257,13 +228,9 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
 
-
-if config.AUTH_TYPE == "GOOGLE":
-    async def get_user_db(session: AsyncSession = Depends(get_async_session)):
-        yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
-else:
-    async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+async def get_user_db(session: AsyncSession = Depends(get_async_session)):
         yield SQLAlchemyUserDatabase(session, User)
+    
     
 async def get_chucks_hybrid_search_retriever(session: AsyncSession = Depends(get_async_session)):
     return ChucksHybridSearchRetriever(session)

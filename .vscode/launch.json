@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug SurfSense Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "stopOnEntry": false,
+            "preLaunchTask": "uv-sync"
+        }
+    ]
+}
