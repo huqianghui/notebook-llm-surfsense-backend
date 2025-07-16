@@ -1,1 +1,1 @@
-CREATE DATABASE surfsense;
+CREATE DATABASE notebookllm;
