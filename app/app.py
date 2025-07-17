@@ -62,18 +62,6 @@ app.include_router(
     tags=["users"],
 )
 
-if config.AUTH_TYPE == "GOOGLE":
-    from app.users import google_oauth_client
-    app.include_router(
-        fastapi_users.get_oauth_router(
-            google_oauth_client,
-            auth_backend,
-            SECRET,
-            is_verified_by_default=True
-        ),
-        prefix="/auth/google",
-        tags=["auth"],
-    )
 
 app.include_router(crud_router, prefix="/api/v1", tags=["crud"])
 

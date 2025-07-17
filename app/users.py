@@ -22,15 +22,6 @@ class BearerResponse(BaseModel):
 
 SECRET = config.SECRET_KEY
 
-if config.AUTH_TYPE == "GOOGLE":
-    from httpx_oauth.clients.google import GoogleOAuth2
-    
-    google_oauth_client = GoogleOAuth2(
-        config.GOOGLE_OAUTH_CLIENT_ID,
-        config.GOOGLE_OAUTH_CLIENT_SECRET,
-    )
-
-
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET

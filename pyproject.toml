@@ -34,4 +34,9 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "validators>=0.34.0",
     "youtube-transcript-api>=1.0.3",
+    "azure-identity>=1.23.0",
+    "tiktoken>=0.5.0",
+    "openai>=1.0.0", 
+    "numpy>=2.0.0, <3.0", 
+    "pydantic>=2.0.0"
 ]

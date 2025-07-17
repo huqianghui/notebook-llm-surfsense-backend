@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 from rerankers import Reranker
 
+from app.embedding.azure_openai import AzureOpenAIEmbeddings
+
 
 # Get the base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -42,19 +44,17 @@ class Config:
     NEXT_FRONTEND_URL = os.getenv("NEXT_FRONTEND_URL")
     
     
-    # AUTH: Google OAuth
-    AUTH_TYPE = os.getenv("AUTH_TYPE")
-    if AUTH_TYPE == "GOOGLE":
-        GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-        GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
-        
-    
     # LLM instances are now managed per-user through the LLMConfig system
     # Legacy environment variables removed in favor of user-specific configurations
 
     # Chonkie Configuration | Edit this to your needs
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-    embedding_model_instance = AutoEmbeddings.get_embeddings(EMBEDDING_MODEL)
+    embedding_model_instance = AzureOpenAIEmbeddings(
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
+        deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT","text-embedding-3-small"),
+        azure_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
+        dimension= int(os.getenv("EMBEDDING_DIMENSION", 1536)))
     chunker_instance = RecursiveChunker(
         chunk_size=getattr(embedding_model_instance, 'max_seq_length', 512)
     )
