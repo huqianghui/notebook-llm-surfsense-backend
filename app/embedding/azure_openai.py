@@ -115,10 +115,17 @@ class AzureOpenAIEmbeddings(BaseEmbeddings):
 
     def embed(self, text: str) -> "np.ndarray":
         """Embed a single string."""
-        response = self.client.embeddings.create(
-            model=self._deployment,
-            input=text,
-        )
+        # Prepare embedding request parameters
+        embed_params = {
+            "model": self._deployment,
+            "input": text,
+        }
+        
+        # Add dimensions parameter if specified and different from model default
+        if self._dimension and self._dimension != self.AVAILABLE_MODELS.get(self.model):
+            embed_params["dimensions"] = self._dimension
+            
+        response = self.client.embeddings.create(**embed_params)
 
         return np.array(response.data[0].embedding, dtype=np.float32)
 
@@ -131,10 +138,17 @@ class AzureOpenAIEmbeddings(BaseEmbeddings):
         for i in range(0, len(texts), self._batch_size):
             batch = texts[i : i + self._batch_size]
             try:
-                response = self.client.embeddings.create(
-                    model=self._deployment,
-                    input=batch,
-                )
+                # Prepare embedding request parameters
+                embed_params = {
+                    "model": self._deployment,
+                    "input": batch,
+                }
+                
+                # Add dimensions parameter if specified and different from model default
+                if self._dimension and self._dimension != self.AVAILABLE_MODELS.get(self.model):
+                    embed_params["dimensions"] = self._dimension
+                    
+                response = self.client.embeddings.create(**embed_params)
                 sorted_embeddings = sorted(response.data, key=lambda x: x.index)
                 embeddings = [
                     np.array(e.embedding, dtype=np.float32) for e in sorted_embeddings

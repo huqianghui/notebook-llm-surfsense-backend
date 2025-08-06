@@ -73,10 +73,8 @@ class CustomBearerTransport(BearerTransport):
     async def get_login_response(self, token: str) -> Response:
         bearer_response = BearerResponse(access_token=token, token_type="bearer")
         redirect_url = f"{config.NEXT_FRONTEND_URL}/auth/callback?token={bearer_response.access_token}"
-        if config.AUTH_TYPE == "GOOGLE":
-            return RedirectResponse(redirect_url, status_code=302)
-        else:
-            return JSONResponse(model_dump(bearer_response))
+        return JSONResponse(model_dump(bearer_response))
+            
 
 bearer_transport = CustomBearerTransport(tokenUrl="auth/jwt/login")
 

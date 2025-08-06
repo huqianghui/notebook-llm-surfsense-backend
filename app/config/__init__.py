@@ -48,13 +48,14 @@ class Config:
     # Legacy environment variables removed in favor of user-specific configurations
 
     # Chonkie Configuration | Edit this to your needs
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     embedding_model_instance = AzureOpenAIEmbeddings(
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
+        model=EMBEDDING_MODEL,
         deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT","text-embedding-3-small"),
         azure_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
         api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
-        dimension= int(os.getenv("EMBEDDING_DIMENSION", 1536)))
+        dimension= int(os.getenv("EMBEDDING_DIMENSION", 1024)))
     chunker_instance = RecursiveChunker(
         chunk_size=getattr(embedding_model_instance, 'max_seq_length', 512)
     )
@@ -63,12 +64,34 @@ class Config:
     )
     
     # Reranker's Configuration | Pinecode, Cohere etc. Read more at https://github.com/AnswerDotAI/rerankers?tab=readme-ov-file#usage
-    RERANKERS_MODEL_NAME = os.getenv("RERANKERS_MODEL_NAME")
-    RERANKERS_MODEL_TYPE = os.getenv("RERANKERS_MODEL_TYPE")
-    reranker_instance = Reranker(
-        model_name=RERANKERS_MODEL_NAME,
-        model_type=RERANKERS_MODEL_TYPE,
-    )
+    
+    # Check for Azure reranker configuration first
+    AZURE_RERANKERS_ENDPOINT = os.getenv("AZURE_RERANKERS_ENDPOINT")
+    AZURE_RERANKERS_ENDPOINT_API_KEY = os.getenv("AZURE_RERANKERS_ENDPOINT_API_KEY")
+    
+    if AZURE_RERANKERS_ENDPOINT and AZURE_RERANKERS_ENDPOINT_API_KEY:
+        # Use Azure reranker if both endpoint and API key are configured
+        from app.reranker.azureReranker import AzureReranker
+        reranker_instance = AzureReranker(
+            model_name="azure-cohere-rerank",
+            endpoint=AZURE_RERANKERS_ENDPOINT,
+            api_key=AZURE_RERANKERS_ENDPOINT_API_KEY
+        )
+    else:
+        # Fallback to standard rerankers
+        RERANKERS_MODEL_NAME = os.getenv("RERANKERS_MODEL_NAME")
+        RERANKERS_MODEL_TYPE = os.getenv("RERANKERS_MODEL_TYPE")
+        
+        if RERANKERS_MODEL_NAME:
+            reranker_instance = Reranker(
+                model_name=RERANKERS_MODEL_NAME,
+                model_type=RERANKERS_MODEL_TYPE,
+            )
+        else:
+            # No reranker configured
+            reranker_instance = None
+
+
     
     # OAuth JWT
     SECRET_KEY = os.getenv("SECRET_KEY")
